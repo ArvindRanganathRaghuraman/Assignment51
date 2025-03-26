@@ -2,8 +2,10 @@ import os
 import re
 import openai
 from pinecone import Pinecone
-from langchain.vectorstores import Pinecone as PineconeVectorStore
-from langchain.embeddings.huggingface import HuggingFaceEmbeddings
+from langchain_pinecone import PineconeVectorStore
+#from langchain.vectorstores import Pinecone as PineconeVectorStore
+#from langchain.embeddings.huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from dotenv import load_dotenv  # Load environment variables
 
 # ✅ Load .env file

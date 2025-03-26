@@ -18,7 +18,8 @@ import shutil
 from pathlib import Path
 from mistral_ocr_local import process_pdf_mistral
 from typing import Dict
-from langraph import graph
+from agents import build_file
+from typing import Optional
 
 
 app = FastAPI()
@@ -304,23 +305,51 @@ def ask_question_chromadb(query: str):
     return {"query": query, "response": result}
 
 
-# Define request schema
-class QueryRequest(BaseModel):
-    query: str
+# Build the graph
+research_pipeline = build_file()
 
-# Endpoint to ask a research question
-@app.post("/ask_question")
-def ask_question(request: QueryRequest):
+@app.post("/generate_report")
+async def generate_report(
+    query: str, 
+    use_rag: bool = True, 
+    use_web_search: bool = True,
+    year: Optional[int] = None, 
+    quarter: Optional[str] = None
+):
     """
-    Process user research question.
-    Currently, it only calls the Web Search Agent.
-    Future: Extend this to Snowflake and RAG Agents.
+    Generate a research report using RAG and/or web search.
+    
+    Parameters:
+    - query: The search query
+    - use_rag: Whether to use RAG (default: True)
+    - use_web_search: Whether to use web search (default: True)
+    - year: Optional year filter for RAG
+    - quarter: Optional quarter filter for RAG (format: "Q1", "Q2", etc.)
     """
-    result = graph.invoke({"query": request.query})
+    # Prepare the state
+    state = {
+        "query": query,
+        "use_rag": use_rag,
+        "use_web_search": use_web_search,
+        "year": year,
+        "quarter": quarter,
+        # Initialize all possible state fields
+        "rag_result": None,
+        "web_results": None,
+        "final_report": None
+    }
+    
+    # Run the graph
+    result = research_pipeline.invoke(state)
+    
     return {
-        "query": request.query,
-        "web_results": result["web_results"]
+        "report": result.get("final_report", "No report generated"),
+        "status": "success"
     }
 
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
 
 

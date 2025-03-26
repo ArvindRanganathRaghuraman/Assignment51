@@ -7,8 +7,19 @@ FASTAPI_URL = "http://127.0.0.1:8000"
 st.title("📄 PDF Processing & Q/A Service")
 
 # Sidebar navigation
-option = st.sidebar.radio("Choose an action:", ["Upload & Parse PDF", "Parse GCS PDF","Select chunking method","Select chunked output file","Select embedded output file","PineconeDB Indexing","ChromaDB Indexing","PineCone:Ask a Question","ChromaDB:Ask a Question","Ask a Research Question", "View Reports"])
-
+option = st.sidebar.radio("Choose an action:", [
+    "Upload & Parse PDF", 
+    "Parse GCS PDF",
+    "Select chunking method",
+    "Select chunked output file",
+    "Select embedded output file",
+    "PineconeDB Indexing",
+    "ChromaDB Indexing",
+    "PineCone:Ask a Question",
+    "ChromaDB:Ask a Question",
+    "Ask a Research Question", 
+    "View Reports"
+])
 
 # ✅ Upload & Parse a PDF
 if option == "Upload & Parse PDF":
@@ -329,35 +340,63 @@ elif option == "ChromaDB:Ask a Question":
             except Exception as e:
                 st.error(f"❌ Exception: {str(e)}")
 
-# ✅ Ask a Research Question
+# ✅ Research Question Option
 elif option == "Ask a Research Question":
-    st.subheader("❓ Research Query Input")
-
-    # User input for query
-    query = st.text_area("Enter your research question about NVIDIA:", "")
-
-    if st.button("🚀 Get Insights"):
-        if not query.strip():
-            st.warning("Please enter a research question before proceeding.")
+    st.subheader("🔍 Ask a Research Question")
+    
+    # User inputs
+    query = st.text_area("Enter your research question:")
+    use_rag = st.checkbox("Use RAG (Historical Data)", value=True)
+    use_web = st.checkbox("Use Web Search (Latest News)", value=True)
+    
+    # Optional filters
+    with st.expander("Advanced Filters (for RAG)"):
+        col1, col2 = st.columns(2)
+        with col1:
+            year = st.number_input("Year", min_value=2000, max_value=2025, value=None, step=1)
+        with col2:
+            quarter = st.selectbox("Quarter", [None, "Q1", "Q2", "Q3", "Q4"])
+    
+    if st.button("Generate Research Report"):
+        if not query:
+            st.warning("Please enter a question")
+        elif not (use_rag or use_web):
+            st.warning("Please select at least one data source (RAG or Web Search)")
         else:
-            # Send request to FastAPI backend
-            response = requests.post(
-                f"{FASTAPI_URL}/ask_question",
-                json={"query": query}
-            )
-
-            if response.status_code == 200:
-                result = response.json()
-                st.subheader("📑 Research Report")
-                st.write(f"**Query:** {result['query']}")
-
-                # Display real-time insights (Web Search results)
-                if "web_results" in result and result["web_results"]:
-                    st.subheader("🌍 Latest Web Insights")
-                    for news in result["web_results"]:
-                        st.markdown(f"🔗 [{news['title']}]({news['link']})")
-                else:
-                    st.write("No recent news found for this query.")
-
-            else:
-                st.error("Failed to fetch insights. Please try again.")
+            with st.spinner("Generating research report..."):
+                try:
+                    # Prepare request payload
+                    payload = {
+                        "query": query,
+                        "use_rag": use_rag,
+                        "use_web_search": use_web,
+                        "year": year if year else None,
+                        "quarter": quarter
+                    }
+                    
+                    # Call FastAPI endpoint
+                    response = requests.post(
+                        f"{FASTAPI_URL}/generate_report",
+                        json=payload
+                    )
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        if result.get("report"):
+                            st.subheader("Research Report")
+                            st.markdown(result["report"])
+                            
+                            # Add download button
+                            st.download_button(
+                                label="Download Report",
+                                data=result["report"],
+                                file_name="research_report.md",
+                                mime="text/markdown"
+                            )
+                        else:
+                            st.warning("No report was generated")
+                    else:
+                        st.error(f"Error: {response.text}")
+                
+                except Exception as e:
+                    st.error(f"An error occurred: {str(e)}")
