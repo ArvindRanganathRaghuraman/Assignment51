@@ -77,7 +77,8 @@ def query_chromadb_with_gpt(query, collection_name="json-index", persist_directo
     )
 
     return response.choices[0].message.content
-
+'''
 # ✅ Example Usage
 query_result = query_chromadb_with_gpt("What is the Revenue for Q1 2025")
-print("\n💡 Answer:\n", query_result)
+print("\n💡 Answer:\n", query_result)'
+'''

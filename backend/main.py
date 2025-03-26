@@ -9,7 +9,7 @@ from io import BytesIO
 import json
 from search import search_from_content,generate_response
 import os
-from Pinecone_v2 import index_json_content
+from Pinecone_Assignment5 import index_json_content
 from chromadb_v2 import index_json_chromadb
 from hybrid_search_pinecone_gpt_v2 import query_pinecone_with_gpt
 from hybrid_search_chromadb_gpt_v2 import query_chromadb_with_gpt
@@ -251,7 +251,8 @@ async def index_json(
 
         # ✅ Index the JSON content into Pinecone
         vector_store = index_json_content(
-            json_content=content,  # Pass the file content (as string) to index_json_content
+            json_content=content,
+            filename=file_path,  # Pass file_path as filename
             index_name=index_name,
             region=region
         )
@@ -262,7 +263,7 @@ async def index_json(
         )
 
     except HTTPException as http_error:
-        raise http_error  # Re-raise HTTPException to return it to the client
+        raise http_error
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"❌ Failed to index: {str(e)}")
