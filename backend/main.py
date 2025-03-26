@@ -308,32 +308,23 @@ def ask_question_chromadb(query: str):
 # Build the graph
 research_pipeline = build_file()
 
-@app.post("/generate_report")
-async def generate_report(
-    query: str, 
-    use_rag: bool = True, 
-    use_web_search: bool = True,
-    year: Optional[int] = None, 
+class ResearchRequest(BaseModel):
+    query: str
+    use_rag: bool = True
+    use_web_search: bool = True
+    year: Optional[int] = None
     quarter: Optional[str] = None
-):
-    """
-    Generate a research report using RAG and/or web search.
-    
-    Parameters:
-    - query: The search query
-    - use_rag: Whether to use RAG (default: True)
-    - use_web_search: Whether to use web search (default: True)
-    - year: Optional year filter for RAG
-    - quarter: Optional quarter filter for RAG (format: "Q1", "Q2", etc.)
-    """
+
+@app.post("/generate_report")
+async def generate_report(request: ResearchRequest):
+    """Generate a research report using RAG and/or web search."""
     # Prepare the state
     state = {
-        "query": query,
-        "use_rag": use_rag,
-        "use_web_search": use_web_search,
-        "year": year,
-        "quarter": quarter,
-        # Initialize all possible state fields
+        "query": request.query,
+        "use_rag": request.use_rag,
+        "use_web_search": request.use_web_search,
+        "year": request.year,
+        "quarter": request.quarter,
         "rag_result": None,
         "web_results": None,
         "final_report": None

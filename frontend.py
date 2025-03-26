@@ -340,7 +340,6 @@ elif option == "ChromaDB:Ask a Question":
             except Exception as e:
                 st.error(f"❌ Exception: {str(e)}")
 
-# ✅ Research Question Option
 elif option == "Ask a Research Question":
     st.subheader("🔍 Ask a Research Question")
     
@@ -365,7 +364,7 @@ elif option == "Ask a Research Question":
         else:
             with st.spinner("Generating research report..."):
                 try:
-                    # Prepare request payload
+                    # Prepare request payload with correct structure
                     payload = {
                         "query": query,
                         "use_rag": use_rag,
@@ -374,10 +373,11 @@ elif option == "Ask a Research Question":
                         "quarter": quarter
                     }
                     
-                    # Call FastAPI endpoint
+                    # Call FastAPI endpoint with proper headers
                     response = requests.post(
                         f"{FASTAPI_URL}/generate_report",
-                        json=payload
+                        json=payload,
+                        headers={"Content-Type": "application/json"}
                     )
                     
                     if response.status_code == 200:
@@ -386,7 +386,6 @@ elif option == "Ask a Research Question":
                             st.subheader("Research Report")
                             st.markdown(result["report"])
                             
-                            # Add download button
                             st.download_button(
                                 label="Download Report",
                                 data=result["report"],
@@ -396,7 +395,9 @@ elif option == "Ask a Research Question":
                         else:
                             st.warning("No report was generated")
                     else:
-                        st.error(f"Error: {response.text}")
+                        st.error(f"Error {response.status_code}: {response.text}")
                 
+                except requests.exceptions.RequestException as e:
+                    st.error(f"Connection error: {str(e)}")
                 except Exception as e:
-                    st.error(f"An error occurred: {str(e)}")
+                    st.error(f"An unexpected error occurred: {str(e)}")
