@@ -1,0 +1,17 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual Environment
+venv/
+*.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Logs and cache
+*.log
+*.cache/
+backend/__pycache__/main.cpython-313.pyc

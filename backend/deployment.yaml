@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: llm-backend
+  template:
+    metadata:
+      labels:
+        app: llm-backend
+    spec:
+      nodeSelector:
+        kubernetes.io/arch: arm64  # Ensures ARM64 nodes are used
+      containers:
+        - name: llm-backend
+          image: gcr.io/starry-tracker-449020-f2/llm_backend_image
+          ports:
+            - containerPort: 8080

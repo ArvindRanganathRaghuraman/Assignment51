@@ -1,0 +1,28 @@
+# Q/A Feature
+st.header("Question Answering")
+question = st.text_input("Enter your question")
+
+qa_model_options = ["gpt"]
+selected_qa_model = st.selectbox("Choose a Q/A Model", qa_model_options)
+
+if st.button("Get Answer"):
+    if selected_file and question.strip():
+        file_response = requests.get(f"{BASE_URL}/get_file/{selected_file}")
+        if file_response.status_code == 200:
+            file_content = file_response.json().get("content")
+
+            if file_content:
+                qa_payload = {"content": file_content, "question": question, "model": selected_qa_model}
+                qa_response = requests.post(f"{BASE_URL}/answer_question/", json=qa_payload)
+
+                if qa_response.status_code == 200:
+                    st.subheader("Answer")
+                    st.text_area("Answer", qa_response.json().get("answer"), height=100)
+                else:
+                    st.error("Failed to get an answer.")
+            else:
+                st.error("File content is empty.")
+        else:
+            st.error("Failed to fetch file content.")
+    else:
+        st.error("Please select a file and enter a question.")
