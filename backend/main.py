@@ -18,8 +18,8 @@ import shutil
 from pathlib import Path
 from mistral_ocr_local import process_pdf_mistral
 from typing import Dict
-from agents import build_file
-from typing import Optional
+from agents import build_research_pipeline
+from typing import Optional, TypedDict
 
 
 app = FastAPI()
@@ -305,39 +305,71 @@ def ask_question_chromadb(query: str):
     result = query_chromadb_with_gpt(query)
     return {"query": query, "response": result}
 
+# Define state structure
+class ResearchState(TypedDict):
+    query: str
+    use_rag: bool
+    use_web_search: bool
+    year: Optional[int]
+    quarter: Optional[str]
+    rag_result: Optional[str]
+    web_results: Optional[str]
+    final_report: Optional[str]
+    error: Optional[str]
 
-# Build the graph
-research_pipeline = build_file()
-
+# Define request model
 class ResearchRequest(BaseModel):
     query: str
     use_rag: bool = True
-    use_web_search: bool = True
+    use_web_search: bool = False
     year: Optional[int] = None
-    quarter: Optional[str] = None
+    quarter: Optional[str] = None  # Should be "Q1", "Q2", etc.
+
+# Initialize the research pipeline
+research_pipeline = build_research_pipeline()
 
 @app.post("/generate_report")
 async def generate_report(request: ResearchRequest):
     """Generate a research report using RAG and/or web search."""
-    # Prepare the state
-    state = {
-        "query": request.query,
-        "use_rag": request.use_rag,
-        "use_web_search": request.use_web_search,
-        "year": request.year,
-        "quarter": request.quarter,
-        "rag_result": None,
-        "web_results": None,
-        "final_report": None
-    }
-    
-    # Run the graph
-    result = research_pipeline.invoke(state)
-    
-    return {
-        "report": result.get("final_report", "No report generated"),
-        "status": "success"
-    }
+    try:
+        # Prepare the state as a dictionary
+        state = {
+            "query": request.query,
+            "use_rag": request.use_rag,
+            "use_web_search": request.use_web_search,
+            "year": request.year if request.use_rag else None,
+            "quarter": request.quarter if request.use_rag else None,
+            "rag_result": None,
+            "web_results": None,
+            "final_report": None,
+            "error": None
+        }
+        
+        # Run the graph
+        result = research_pipeline.invoke(state)
+        
+        # Handle error cases
+        if result.get("error"):
+            raise HTTPException(
+                status_code=400,
+                detail=result["error"]
+            )
+        
+        return {
+            "report": result.get("final_report", "No report could be generated"),
+            "status": "success",
+            "components_used": {
+                "rag_used": request.use_rag,
+                "web_search_used": request.use_web_search
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Processing failed: {str(e)}"
+        ) from e
+
 
 # Health check endpoint
 @app.get("/health")

@@ -87,10 +87,23 @@ def index_json_content(json_content, filename=None, index_name="json-index", reg
 
     vector_store.add_documents(documents)
     print(f"✅ Successfully indexed {len(documents)} chunks with Year & Quarter from filename into Pinecone ({index_name}).")
+    return vector_store
 
-    # ✅ Fetch and print index stats
+    # ✅ List all vectors in the index
+    index = pc.Index("json-index-1")
     index_stats = index.describe_index_stats()
-    print("📊 Pinecone Index Stats:")
     print(json.dumps(index_stats, indent=2))
 
-    return vector_store
+'''
+# Example Usage
+if __name__ == "__main__":
+    json_file_path = "output-json/output-q1-2021.json"  # Ensure this file exists
+    with open(json_file_path, "r", encoding="utf-8") as f:
+        json_content = f.read()
+
+    vector_store = index_json_content(json_content, filename=json_file_path, index_name="json-index-1", region="us-east-1")
+    if vector_store:
+        print("✅ Indexing completed successfully.")
+    else:
+        print("❌ Indexing failed.")'
+        '''

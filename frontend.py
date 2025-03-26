@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+from datetime import datetime
 
 # FastAPI Backend URL
 FASTAPI_URL = "http://127.0.0.1:8000"
@@ -344,60 +345,97 @@ elif option == "Ask a Research Question":
     st.subheader("🔍 Ask a Research Question")
     
     # User inputs
-    query = st.text_area("Enter your research question:")
-    use_rag = st.checkbox("Use RAG (Historical Data)", value=True)
-    use_web = st.checkbox("Use Web Search (Latest News)", value=True)
+    query = st.text_area("Enter your research question:", placeholder="e.g., NVIDIA's Q4 2023 financial performance", height=100)
     
-    # Optional filters
-    with st.expander("Advanced Filters (for RAG)"):
-        col1, col2 = st.columns(2)
-        with col1:
-            year = st.number_input("Year", min_value=2000, max_value=2025, value=None, step=1)
-        with col2:
-            quarter = st.selectbox("Quarter", [None, "Q1", "Q2", "Q3", "Q4"])
+    # Data source selection
+    col1, col2 = st.columns(2)
+    with col1:
+        use_rag = st.checkbox("Use RAG (Historical Data)", value=True, 
+                            help="Search through indexed financial reports and documents")
+    with col2:
+        use_web = st.checkbox("Use Web Search (Latest News)", value=False,
+                            help="Fetch real-time news and market updates")
     
-    if st.button("Generate Research Report"):
-        if not query:
-            st.warning("Please enter a question")
+    # Conditional RAG filters
+    if use_rag:
+        with st.expander("🔧 Advanced Filters (for RAG)"):
+            st.caption("Filter historical data by specific time period")
+            col1, col2 = st.columns(2)
+            with col1:
+                year = st.number_input("Year", 
+                                      min_value=2000, 
+                                      max_value=2025, 
+                                      value=None, 
+                                      step=1,
+                                      help="Filter by specific year")
+            with col2:
+                quarter = st.selectbox("Quarter", 
+                                      [None, "Q1", "Q2", "Q3", "Q4"],
+                                      help="Filter by specific quarter")
+    else:
+        year, quarter = None, None  # Ensure these are None if RAG is disabled
+    
+    if st.button("🚀 Generate Research Report", type="primary"):
+        if not query.strip():
+            st.warning("⚠️ Please enter a valid question")
         elif not (use_rag or use_web):
-            st.warning("Please select at least one data source (RAG or Web Search)")
+            st.warning("⚠️ Please select at least one data source")
         else:
-            with st.spinner("Generating research report..."):
+            with st.spinner("🔍 Gathering and analyzing information..."):
                 try:
-                    # Prepare request payload with correct structure
+                    # Prepare request payload
                     payload = {
-                        "query": query,
+                        "query": query.strip(),
                         "use_rag": use_rag,
                         "use_web_search": use_web,
-                        "year": year if year else None,
-                        "quarter": quarter
+                        "year": year if use_rag else None,  # Only send if RAG is enabled
+                        "quarter": quarter if use_rag else None
                     }
                     
-                    # Call FastAPI endpoint with proper headers
+                    # API call with timeout
                     response = requests.post(
                         f"{FASTAPI_URL}/generate_report",
                         json=payload,
-                        headers={"Content-Type": "application/json"}
+                        headers={"Content-Type": "application/json"},
+                        timeout=30  # 30-second timeout
                     )
                     
+                    # Handle response
                     if response.status_code == 200:
                         result = response.json()
+                        
                         if result.get("report"):
-                            st.subheader("Research Report")
-                            st.markdown(result["report"])
+                            # Display report
+                            st.success("✅ Report generated successfully!")
+                            st.subheader("📝 Research Report")
                             
+                            with st.expander("View Full Report", expanded=True):
+                                st.markdown(result["report"])
+                            
+                            # Download button
                             st.download_button(
-                                label="Download Report",
+                                label="📥 Download Report",
                                 data=result["report"],
-                                file_name="research_report.md",
+                                file_name=f"research_report_{datetime.now().strftime('%Y%m%d')}.md",
                                 mime="text/markdown"
                             )
+                            
+                            # Show which components were used
+                            st.caption(f"Sources used: {'RAG + Web Search' if use_rag and use_web else 'RAG' if use_rag else 'Web Search'}")
                         else:
-                            st.warning("No report was generated")
+                            st.warning("ℹ️ No relevant information found for your query")
+                    
+                    elif response.status_code == 400:
+                        st.error(f"❌ Validation error: {response.json().get('detail', 'Invalid request')}")
+                    elif response.status_code == 429:
+                        st.error("⏳ Too many requests. Please try again later.")
                     else:
-                        st.error(f"Error {response.status_code}: {response.text}")
+                        st.error(f"⚠️ API Error {response.status_code}: {response.text}")
                 
+                except requests.exceptions.Timeout:
+                    st.error("⏱️ Request timed out. The server is taking too long to respond.")
                 except requests.exceptions.RequestException as e:
-                    st.error(f"Connection error: {str(e)}")
+                    st.error(f"🔌 Connection error: Please check your internet connection")
                 except Exception as e:
-                    st.error(f"An unexpected error occurred: {str(e)}")
+                    st.error(f"❌ Unexpected error: {str(e)}")
+                    st.exception(e)  # For debugging
