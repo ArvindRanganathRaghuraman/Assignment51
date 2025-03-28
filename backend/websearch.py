@@ -28,8 +28,6 @@ def fetch_nvidia_news(query="NVIDIA latest news"):
         return "\n".join(news)
 
     return "No news found."
-'''
-#testing the code
+
 if __name__ == "__main__":
     print(fetch_nvidia_news())
-'''

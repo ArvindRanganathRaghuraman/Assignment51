@@ -348,17 +348,20 @@ elif option == "Ask a Research Question":
     query = st.text_area("Enter your research question:", placeholder="e.g., NVIDIA's Q4 2023 financial performance", height=100)
     
     # Data source selection
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
         use_rag = st.checkbox("Use RAG (Historical Data)", value=True, 
                             help="Search through indexed financial reports and documents")
     with col2:
         use_web = st.checkbox("Use Web Search (Latest News)", value=False,
                             help="Fetch real-time news and market updates")
+    with col3:
+        use_snowflake = st.checkbox("Use Snowflake (Structured Data)", value=False,
+                                  help="Query structured financial data from Snowflake")
     
-    # Conditional RAG filters
-    if use_rag:
-        with st.expander("🔧 Advanced Filters (for RAG)"):
+    # Conditional RAG filters (ONLY show when RAG is enabled)
+    if use_rag:  # Removed the "or use_snowflake" condition
+        with st.expander("🔧 Advanced Filters (for RAG only)"):
             st.caption("Filter historical data by specific time period")
             col1, col2 = st.columns(2)
             with col1:
@@ -367,29 +370,30 @@ elif option == "Ask a Research Question":
                                       max_value=2025, 
                                       value=None, 
                                       step=1,
-                                      help="Filter by specific year")
+                                      help="Filter RAG documents by specific year")
             with col2:
                 quarter = st.selectbox("Quarter", 
-                                      [None, "Q1", "Q2", "Q3", "Q4"],
-                                      help="Filter by specific quarter")
+                                      [None, "1", "2", "3", "4"],
+                                      help="Filter RAG documents by specific quarter")
     else:
         year, quarter = None, None  # Ensure these are None if RAG is disabled
     
     if st.button("🚀 Generate Research Report", type="primary"):
         if not query.strip():
             st.warning("⚠️ Please enter a valid question")
-        elif not (use_rag or use_web):
+        elif not (use_rag or use_web or use_snowflake):
             st.warning("⚠️ Please select at least one data source")
         else:
             with st.spinner("🔍 Gathering and analyzing information..."):
                 try:
-                    # Prepare request payload
+                    # Prepare request payload - year/quarter ONLY for RAG
                     payload = {
                         "query": query.strip(),
                         "use_rag": use_rag,
                         "use_web_search": use_web,
-                        "year": year if use_rag else None,  # Only send if RAG is enabled
-                        "quarter": quarter if use_rag else None
+                        "use_snowflake": use_snowflake,
+                        "year": year if use_rag else None,  # ONLY send if RAG is enabled
+                        "quarter": quarter if use_rag else None  # ONLY send if RAG is enabled
                     }
                     
                     # API call with timeout
@@ -421,7 +425,14 @@ elif option == "Ask a Research Question":
                             )
                             
                             # Show which components were used
-                            st.caption(f"Sources used: {'RAG + Web Search' if use_rag and use_web else 'RAG' if use_rag else 'Web Search'}")
+                            sources_used = []
+                            if result["components_used"]["rag_used"]:
+                                sources_used.append("RAG")
+                            if result["components_used"]["web_search_used"]:
+                                sources_used.append("Web Search")
+                            if result["components_used"]["snowflake_used"]:
+                                sources_used.append("Snowflake")
+                            st.caption(f"Sources used: {' + '.join(sources_used) if sources_used else 'None'}")
                         else:
                             st.warning("ℹ️ No relevant information found for your query")
                     

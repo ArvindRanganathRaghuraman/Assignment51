@@ -27,7 +27,7 @@ def extract_quarter(query):
     return None, None
 
 # ✅ Hybrid Search Function for GPT-4o
-def query_pinecone_with_gpt(query, index_name="json-index-1", region="us-east-1", top_k=5):
+def query_pinecone_with_gpt(query, index_name="json-index", region="us-east-1", top_k=5):
     """ Query Pinecone with hybrid search (semantic + keyword-based) and generate an answer using GPT-4o. """
 
     quarter, year = extract_quarter(query)

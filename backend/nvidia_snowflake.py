@@ -103,7 +103,29 @@ agent = initialize_agent(
     verbose=True
 )
 
+def get_nvidia_financial_response(user_query: str) -> dict:
+    """Simple wrapper for the financial agent"""
+    try:
+        # Pass the query directly to your pre-initialized agent
+        response = agent.invoke({"input": user_query})
+        return {
+            "output": response["output"],
+            "status": "success"
+        }
+    except Exception as e:
+        return {
+            "output": f"Error processing query: {str(e)}",
+            "status": "error"
+        }
+'''' 
+# Simplest possible test
+prompt = "Provide summary of 2024 with the quarters"
+result = get_nvidia_financial_response(prompt)
+print(result["output"])
+
+
 # 🔁 Prompt the user via terminal
 user_prompt = input("Your question: ")
-response = agent.invoke(user_prompt)
-print(response["output"])
+response = agent.invoke(user_prompt)'
+'''
+
