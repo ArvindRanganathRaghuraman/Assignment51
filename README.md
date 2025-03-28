@@ -55,4 +55,20 @@ https://docs.google.com/document/d/1ZXzyDzWTK9nD04Mf43efhiRO9CnKPUpcgm4mFg_-Lz0/
 ![rag_architecture](https://github.com/user-attachments/assets/75fb779e-bf0b-4819-bc3b-1a421fc9fef0)
 
 
+# Assignment 5-1
+**Overview**
+
+In this assignment, we have continued from assignment 4 part 2, where we are creating 3 different agents to fetch NVIDIA data by using different sources and create a report by using all of this data.
+
+
+**Architecture Diagram**
+
+![image](https://github.com/user-attachments/assets/1c35fa84-15c9-4401-821c-3c25325d0950)
+
+
+**Contributions**
+
+
+
+
 
