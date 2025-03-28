@@ -58,7 +58,7 @@ https://docs.google.com/document/d/1ZXzyDzWTK9nD04Mf43efhiRO9CnKPUpcgm4mFg_-Lz0/
 # Assignment 5-1
 **Overview**
 
-In this assignment, we have continued from assignment 4 part 2, where we are creating 3 different agents to fetch NVIDIA data by using different sources and create a report by using all of this data.
+In this assignment, we have continued from assignment 4, part 2, where we created 3 different agents to fetch NVIDIA data from different sources and create a report using all of this data.
 
 
 **Architecture Diagram**
