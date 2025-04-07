@@ -3,7 +3,8 @@ import requests
 from datetime import datetime
 
 # FastAPI Backend URL
-FASTAPI_URL = "http://127.0.0.1:8000"
+#FASTAPI_URL = "http://127.0.0.1:8000"
+FASTAPI_URL = "https://assignment-5-deployment-343736309329.us-central1.run.app/"
 
 st.title("📄 PDF Processing & Q/A Service")
 
